@@ -1,0 +1,36 @@
+services:
+  app:
+    build:
+      args:
+        USER: ${USER:-appuser}
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+      context: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - 8000:8000
+    user: ${USER:-appuser}
+    volumes:
+      - .:/app
+
+  postgres:
+    environment:
+      - POSTGRES_DB=django-postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_INITDB_ARGS=--no-sync
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    image: postgres:16-bookworm
+    ports:
+      - 5432:5432
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  pg_data:
